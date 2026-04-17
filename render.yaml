@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: code-refine-ai
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && python main.py
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8000
+      - key: DATABASE_PATH
+        value: /tmp/db.sqlite
+      - key: RELOAD
+        value: "false"
+    maxSticky: 0
