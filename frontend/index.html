@@ -171,6 +171,10 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--f
     <form id="login-form" class="login-form" onsubmit="handleLogin(event)">
       <input type="email" id="login-email" class="login-input" placeholder="Email address" required>
       <input type="password" id="login-password" class="login-input" placeholder="Password" required>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;margin:4px 0">
+        <input type="checkbox" id="remember-me" style="width:16px;height:16px;cursor:pointer">
+        Remember me on this device
+      </label>
       <button type="submit" class="login-button primary" id="login-btn">Sign In</button>
     </form>
     <form id="register-form" class="login-form" style="display:none" onsubmit="handleRegister(event)">
@@ -381,7 +385,8 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--f
 let sessions=[],selectedSessionId=null,sidebarOpen=true,deleteTargetId=null,authToken=null,userId=null,isLoginMode=true;
 
 function checkAuth(){
-  const token=localStorage.getItem('authToken'),uid=localStorage.getItem('userId');
+  let token=localStorage.getItem('authToken'),uid=localStorage.getItem('userId');
+  if(!token||!uid){token=sessionStorage.getItem('authToken');uid=sessionStorage.getItem('userId');}
   if(token&&uid){authToken=token;userId=uid;document.getElementById('login-screen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');loadSessions();}
   else{document.getElementById('app').classList.add('hidden');document.getElementById('login-screen').classList.remove('hidden');}
 }
@@ -401,13 +406,18 @@ function clearLoginError(){document.getElementById('login-error').style.display=
 
 async function handleLogin(e){
   e.preventDefault();
-  const email=document.getElementById('login-email').value,password=document.getElementById('login-password').value,btn=document.getElementById('login-btn'),orig=btn.textContent;
+  const email=document.getElementById('login-email').value,password=document.getElementById('login-password').value,rememberMe=document.getElementById('remember-me').checked,btn=document.getElementById('login-btn'),orig=btn.textContent;
   btn.disabled=true;btn.textContent='Signing in...';clearLoginError();
   try{
     const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
     const data=await res.json();
     if(!res.ok){showLoginError(data.error||'Login failed');}
-    else{localStorage.setItem('authToken',data.token);localStorage.setItem('userId',data.userId);authToken=data.token;userId=data.userId;document.getElementById('login-screen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');loadSessions();}
+    else{
+      const storage=rememberMe?localStorage:sessionStorage;
+      storage.setItem('authToken',data.token);
+      storage.setItem('userId',data.userId);
+      authToken=data.token;userId=data.userId;document.getElementById('login-screen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');loadSessions();
+    }
   }catch(err){showLoginError('Connection error: '+err.message);}
   finally{btn.disabled=false;btn.textContent=orig;}
 }
@@ -426,7 +436,7 @@ async function handleRegister(e){
   finally{btn.disabled=false;btn.textContent=orig;}
 }
 
-function logout(){localStorage.removeItem('authToken');localStorage.removeItem('userId');authToken=null;userId=null;location.reload();}
+function logout(){localStorage.removeItem('authToken');localStorage.removeItem('userId');sessionStorage.removeItem('authToken');sessionStorage.removeItem('userId');authToken=null;userId=null;location.reload();}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
