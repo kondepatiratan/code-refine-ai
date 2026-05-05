@@ -134,6 +134,85 @@
       margin-left: auto; padding: 2px 10px; font-size: 11px;
       border: 1px solid var(--border); border-radius: 20px; color: var(--muted); display: none;
     }
+    .topbar-user-menu {
+      margin-left: auto; display: flex; align-items: center; gap: 10px;
+    }
+    .topbar-user-info { font-size: 12px; color: var(--muted); }
+    .topbar-logout-btn {
+      padding: 6px 12px; background: var(--danger); color: #fff;
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 12px; font-weight: 500; font-family: var(--font);
+      transition: opacity 0.15s;
+    }
+    .topbar-logout-btn:hover { opacity: 0.9; }
+
+    /* Auth Modal */
+    #auth-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 300;
+      align-items: center; justify-content: center;
+    }
+    #auth-modal.show { display: flex; }
+    .auth-container {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px; max-width: 420px; width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .auth-header { margin-bottom: 24px; }
+    .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .auth-logo-icon {
+      width: 40px; height: 40px; background: var(--primary);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .auth-logo-icon svg { width: 20px; height: 20px; color: #fff; }
+    .auth-logo-text h2 { font-size: 16px; font-weight: 600; margin: 0; }
+    .auth-logo-text p { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+    .auth-tabs {
+      display: flex; gap: 8px; margin-bottom: 24px;
+      border-bottom: 1px solid var(--border); padding-bottom: 12px;
+    }
+    .auth-tab {
+      flex: 1; padding: 8px 12px; background: none;
+      border: none; font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer; transition: color 0.15s;
+      border-bottom: 2px solid transparent; margin-bottom: -13px;
+      font-family: var(--font);
+    }
+    .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .auth-tab:hover { color: var(--fg); }
+    
+    .auth-content { display: none; }
+    .auth-content.active { display: block; }
+    
+    .auth-form-group { margin-bottom: 16px; }
+    .auth-form-group label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 6px; color: var(--fg); }
+    .auth-form-group input {
+      width: 100%; padding: 10px 12px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--card); color: var(--fg); font-family: var(--font);
+      outline: none; transition: border-color 0.15s;
+    }
+    .auth-form-group input:focus { border-color: var(--primary); }
+    .auth-form-group input::placeholder { color: var(--muted); }
+    
+    .auth-error {
+      color: var(--danger); font-size: 12px; margin-top: 6px;
+      display: none; word-wrap: break-word;
+    }
+    .auth-error.show { display: block; }
+    
+    .auth-submit {
+      width: 100%; padding: 10px;
+      background: var(--primary); color: var(--primary-fg);
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: var(--font);
+      transition: background 0.15s;
+    }
+    .auth-submit:hover:not(:disabled) { background: var(--primary-hover); }
+    .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .auth-footer { margin-top: 16px; text-align: center; font-size: 12px; color: var(--muted); }
 
     /* Panels */
     #panels { flex: 1; display: flex; overflow: hidden; }
@@ -382,6 +461,10 @@
         <span id="topbar-title-text">Code Refine AI</span>
       </div>
       <span id="topbar-lang-badge"></span>
+      <div class="topbar-user-menu" id="topbar-user-menu" style="display:none;">
+        <span class="topbar-user-info" id="topbar-user-email"></span>
+        <button class="topbar-logout-btn" onclick="logout()">Logout</button>
+      </div>
     </div>
 
     <div id="panels">
@@ -518,6 +601,68 @@
   </div>
 </div>
 
+<!-- Auth Modal -->
+<div id="auth-modal">
+  <div class="auth-container">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+          </svg>
+        </div>
+        <div class="auth-logo-text">
+          <h2>Code Refine AI</h2>
+          <p>Sign in to get started</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="signin" onclick="switchAuthTab('signin')">Sign In</button>
+      <button class="auth-tab" data-tab="signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Sign In Tab -->
+    <div class="auth-content active" id="signin-content">
+      <form id="signin-form" onsubmit="handleSignIn(event)">
+        <div class="auth-form-group">
+          <label>Email</label>
+          <input type="email" id="signin-email" placeholder="your@email.com" required />
+        </div>
+        <div class="auth-form-group">
+          <label>Password</label>
+          <input type="password" id="signin-password" placeholder="••••••••" required />
+        </div>
+        <div class="auth-error" id="signin-error"></div>
+        <button type="submit" class="auth-submit" id="signin-submit">Sign In</button>
+      </form>
+      <div class="auth-footer">New to Code Refine? <strong>Switch to Sign Up tab above.</strong></div>
+    </div>
+
+    <!-- Sign Up Tab -->
+    <div class="auth-content" id="signup-content">
+      <form id="signup-form" onsubmit="handleSignUp(event)">
+        <div class="auth-form-group">
+          <label>Email</label>
+          <input type="email" id="signup-email" placeholder="your@email.com" required />
+        </div>
+        <div class="auth-form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="••••••••" minlength="6" required />
+        </div>
+        <div class="auth-form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="signup-confirm" placeholder="••••••••" required />
+        </div>
+        <div class="auth-error" id="signup-error"></div>
+        <button type="submit" class="auth-submit" id="signup-submit">Create Account</button>
+      </form>
+      <div class="auth-footer">Already have an account? <strong>Switch to Sign In tab above.</strong></div>
+    </div>
+  </div>
+</div>
+
 <!-- Delete Modal -->
 <div id="modal-overlay">
   <div class="modal">
@@ -533,6 +678,185 @@
 <div id="toast"></div>
 
 <script>
+  // ============ AUTHENTICATION ============
+  const API_BASE = window.location.origin;
+  let currentUser = null;
+  let currentToken = null;
+
+  // Get auth headers with token
+  function getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    if (currentToken) {
+      headers['Authorization'] = `Bearer ${currentToken}`;
+    }
+    return headers;
+  }
+
+  // Switch auth tabs
+  function switchAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById(`${tab}-content`).classList.add('active');
+    document.getElementById(`${tab}-error`).classList.remove('show');
+  }
+
+  // Show auth error
+  function showAuthError(tab, msg) {
+    const errorEl = document.getElementById(`${tab}-error`);
+    errorEl.textContent = msg;
+    errorEl.classList.add('show');
+  }
+
+  // Handle Sign In
+  async function handleSignIn(e) {
+    e.preventDefault();
+    const email = document.getElementById('signin-email').value;
+    const password = document.getElementById('signin-password').value;
+    const btn = document.getElementById('signin-submit');
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        showAuthError('signin', data.error || 'Sign in failed');
+        return;
+      }
+
+      const data = await res.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('email', email);
+      currentToken = data.token;
+      currentUser = email;
+      showAuthModal(false);
+      updateUserUI();
+      loadSessions();
+    } catch (err) {
+      showAuthError('signin', 'Network error. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+
+  // Handle Sign Up
+  async function handleSignUp(e) {
+    e.preventDefault();
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+    const confirm = document.getElementById('signup-confirm').value;
+
+    if (password !== confirm) {
+      showAuthError('signup', 'Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      showAuthError('signup', 'Password must be at least 6 characters');
+      return;
+    }
+
+    const btn = document.getElementById('signup-submit');
+    btn.disabled = true;
+    btn.textContent = 'Creating account...';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        showAuthError('signup', data.error || 'Sign up failed');
+        return;
+      }
+
+      // Auto sign in after registration
+      const loginRes = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!loginRes.ok) {
+        showAuthError('signup', 'Account created! Please sign in manually.');
+        switchAuthTab('signin');
+        return;
+      }
+
+      const loginData = await loginRes.json();
+      localStorage.setItem('token', loginData.token);
+      localStorage.setItem('email', email);
+      currentToken = loginData.token;
+      currentUser = email;
+      showAuthModal(false);
+      updateUserUI();
+      loadSessions();
+    } catch (err) {
+      showAuthError('signup', 'Network error. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  }
+
+  // Show/hide auth modal
+  function showAuthModal(show) {
+    document.getElementById('auth-modal').classList.toggle('show', show);
+  }
+
+  // Update user UI
+  function updateUserUI() {
+    const userMenu = document.getElementById('topbar-user-menu');
+    if (currentUser) {
+      document.getElementById('topbar-user-email').textContent = currentUser;
+      userMenu.style.display = 'flex';
+    } else {
+      userMenu.style.display = 'none';
+    }
+  }
+
+  // Logout
+  function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('email');
+      currentToken = null;
+      currentUser = null;
+      sessions = [];
+      selectedSessionId = null;
+      updateUserUI();
+      renderSessions();
+      showOutputState('empty');
+      updateTopbar(null);
+      showAuthModal(true);
+    }
+  }
+
+  // Check if user is authenticated on page load
+  function checkAuth() {
+    const token = localStorage.getItem('token');
+    const email = localStorage.getItem('email');
+    if (token && email) {
+      currentToken = token;
+      currentUser = email;
+      updateUserUI();
+      return true;
+    }
+    return false;
+  }
+
+  // ============ EXISTING CODE ============
   let sessions = [];
   let selectedSessionId = null;
   let sidebarOpen = true;
@@ -590,7 +914,9 @@
   });
 
   async function loadSessions() {
-    const res = await fetch('/api/refine/sessions');
+    const res = await fetch('/api/refine/sessions', {
+      headers: getAuthHeaders()
+    });
     sessions = await res.json();
     renderSessions();
   }
@@ -598,14 +924,17 @@
   async function createSession(title, language) {
     const res = await fetch('/api/refine/sessions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ title, language })
     });
     return await res.json();
   }
 
   async function deleteSession(id) {
-    await fetch(`/api/refine/sessions/${id}`, { method: 'DELETE' });
+    await fetch(`/api/refine/sessions/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
     if (selectedSessionId === id) {
       selectedSessionId = null;
       updateTopbar(null);
@@ -616,7 +945,9 @@
   }
 
   async function loadSession(id) {
-    const res = await fetch(`/api/refine/sessions/${id}`);
+    const res = await fetch(`/api/refine/sessions/${id}`, {
+      headers: getAuthHeaders()
+    });
     return await res.json();
   }
 
@@ -777,7 +1108,7 @@
     try {
       const response = await fetch(`/api/refine/sessions/${sessionId}/refine`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ code, language })
       });
 
@@ -831,7 +1162,7 @@
       try {
         const res = await fetch('/api/detect-language', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ code })
         });
         const data = await res.json();
@@ -868,7 +1199,21 @@
     clearTimeout(autoRefineTimeout);
   });
 
-  loadSessions();
+  // ============ INITIALIZE APP ============
+  function initializeApp() {
+    const isAuthenticated = checkAuth();
+    if (!isAuthenticated) {
+      showAuthModal(true);
+    } else {
+      loadSessions();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  } else {
+    initializeApp();
+  }
 </script>
 </body>
 </html>
